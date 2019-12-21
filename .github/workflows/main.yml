@@ -1,0 +1,46 @@
+name: DistroWatch Dumper
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: 'master'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Setup git config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      - name: Install distrowatch-parser
+        run: |
+          npm install -g distrowatch-parser
+          distrowatch-parser --version
+      - name: Dump all rankings to JSON file
+        run: distrowatch-parser fetch-ranking all > rankings.json 2>/dev/null
+      - name: Commit and push updated ranking file
+        run: |
+          [ -n "$(git status --porcelain)" ] || { echo "Ranking file did not change, exiting..."; exit 0; }
+          
+          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M")
+          head -n -1 README.md > updated-README.md
+          echo "Last updated on ${CURRENT_TIME}" >> updated-README.md
+          mv updated-README.md README.md
+          
+          git add .
+          git commit -m "Update ranking file ${CURRENT_TIME}"
+          git remote set-url --push origin https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}
+          git push -u origin master
