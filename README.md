@@ -6,4 +6,4 @@ The github action that does the dumps runs every 6 hours, and will never stop ge
 
 You can access this file at https://raw.githubusercontent.com/jamezrin/distrowatch-data/master/rankings.json
 
-Last updated on 2021-07-18 06:11
+Last updated on 2021-07-19 00:33
